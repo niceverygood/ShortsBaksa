@@ -36,6 +36,14 @@ export async function POST(
   try {
     const { id } = await params;
     
+    // body에서 옵션 읽기
+    let body: { videoAI?: string; higgsfieldModel?: string } = {};
+    try {
+      body = await request.json();
+    } catch {
+      // body가 없을 수 있음
+    }
+    
     const timeline = await loadTimeline(id);
     if (!timeline) {
       return NextResponse.json(
@@ -44,7 +52,19 @@ export async function POST(
       );
     }
 
+    // body에서 받은 옵션으로 업데이트
+    if (body.videoAI) {
+      timeline.options.videoAI = body.videoAI as 'veo' | 'higgsfield';
+    }
+    if (body.higgsfieldModel) {
+      timeline.options.higgsfieldModel = body.higgsfieldModel;
+    }
+
     console.log(`[ShortsScenes] 씬 영상 생성 시작: ${id}`);
+    console.log(`[ShortsScenes] Video AI: ${timeline.options.videoAI}`);
+    if (timeline.options.videoAI === 'higgsfield') {
+      console.log(`[ShortsScenes] Higgsfield 모델: ${timeline.options.higgsfieldModel || 'seedance-1.5'}`);
+    }
 
     // SceneManager 생성
     const sceneManager = createSceneManager({
@@ -53,6 +73,7 @@ export async function POST(
       category: timeline.category || undefined,
       videoProvider: timeline.options.videoAI,
       videoGenerationMode: timeline.options.videoGenerationMode,
+      higgsfieldModel: timeline.options.higgsfieldModel,
     });
 
     // 1. 프롬프트 생성

@@ -251,6 +251,7 @@ export default function Home() {
   const [targetDuration, setTargetDuration] = useState<30 | 60>(30);
   const [scriptAI, setScriptAI] = useState<'claude' | 'gpt-5' | 'gemini'>('claude');
   const [videoAI, setVideoAI] = useState<'veo' | 'higgsfield'>('veo');
+  const [higgsfieldModel, setHiggsfieldModel] = useState<'seedance-1.5' | 'kling-2.6' | 'wan-2.6' | 'minimax-hailuo'>('seedance-1.5');
   const [enableSubtitles, setEnableSubtitles] = useState(true);
   const [enableBGM, setEnableBGM] = useState(false);
 
@@ -909,7 +910,7 @@ export default function Home() {
           topic,
           category,
           targetDuration,
-          options: { scriptAI, videoAI, enableSubtitles, enableBGM },
+          options: { scriptAI, videoAI, higgsfieldModel, enableSubtitles, enableBGM },
         }),
       });
 
@@ -1024,7 +1025,14 @@ export default function Home() {
     addLog('🎬 씬 영상 생성 요청 중...');
 
     try {
-      const response = await fetch(`/api/shorts/${timeline.id}/scenes`, { method: 'POST' });
+      const response = await fetch(`/api/shorts/${timeline.id}/scenes`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoAI,
+          higgsfieldModel,
+        }),
+      });
       const data = await response.json();
       if (!data.success) throw new Error(data.error || '씬 생성 실패');
 
@@ -1793,9 +1801,19 @@ export default function Home() {
     if (!hasVideos || currentStep === 'idle' || currentStep === 'script' || currentStep === 'audio') return null;
 
     // 사용된 AI 정보 (현재 선택된 videoAI 사용)
-    const aiLabel = videoAI === 'veo' ? 'Veo 3.1' : 'Higgsfield';
-    const aiColor = videoAI === 'veo' ? 'text-emerald-400 bg-emerald-500/20' : 'text-blue-400 bg-blue-500/20';
-    const aiIcon = videoAI === 'veo' ? '🎙️' : '🔊';
+    const getHiggsfieldModelLabel = () => {
+      switch (higgsfieldModel) {
+        case 'seedance-1.5': return 'Seedance 1.5';
+        case 'kling-2.6': return 'Kling 2.6';
+        case 'wan-2.6': return 'Wan 2.6';
+        case 'minimax-hailuo': return 'MiniMax Hailuo';
+        default: return 'Seedance';
+      }
+    };
+    
+    const aiLabel = videoAI === 'veo' ? 'Google Veo 3.1' : `Higgsfield · ${getHiggsfieldModelLabel()}`;
+    const aiColor = videoAI === 'veo' ? 'text-emerald-400 bg-emerald-500/20' : 'text-purple-400 bg-purple-500/20';
+    const aiIcon = videoAI === 'veo' ? '🎙️' : '🎬';
 
     return (
       <div className="bg-gray-900 rounded-xl p-5 mb-6 border border-gray-800">
@@ -2099,8 +2117,8 @@ export default function Home() {
                   onChange={(e) => setVideoAI(e.target.value as any)}
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 focus:outline-none"
                 >
-                  <option value="veo">🎙️ Veo 3.1 (영상+음성 동시)</option>
-                  <option value="higgsfield">🔊 Higgsfield (영상→TTS합성)</option>
+                  <option value="veo">🎙️ Google Veo 3.1 (영상+음성 동시)</option>
+                  <option value="higgsfield">🔊 Higgsfield 플랫폼 (영상→TTS합성)</option>
                 </select>
                 {/* AI별 특징 안내 */}
                 <p className={`text-xs mt-2 ${videoAI === 'veo' ? 'text-emerald-400' : 'text-blue-400'}`}>
@@ -2109,6 +2127,29 @@ export default function Home() {
                     : '🔧 Higgsfield: 영상 생성 후 TTS 음성 합성'}
                 </p>
                   </div>
+
+              {/* Higgsfield 모델 선택 */}
+              {videoAI === 'higgsfield' && (
+                <div>
+                  <label className="block text-gray-400 text-sm mb-2">Higgsfield 모델</label>
+                  <select
+                    value={higgsfieldModel}
+                    onChange={(e) => setHiggsfieldModel(e.target.value as any)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-purple-500 focus:outline-none"
+                  >
+                    <option value="seedance-1.5">🎬 Seedance 1.5 Pro (ByteDance)</option>
+                    <option value="kling-2.6">🎥 Kling 2.6 (Kuaishou)</option>
+                    <option value="wan-2.6">🌊 Wan 2.6 (Alibaba)</option>
+                    <option value="minimax-hailuo">🌟 MiniMax Hailuo</option>
+                  </select>
+                  <p className="text-xs mt-2 text-purple-400">
+                    {higgsfieldModel === 'seedance-1.5' && '🎬 Seedance: 빠른 생성, 안정적 품질'}
+                    {higgsfieldModel === 'kling-2.6' && '🎥 Kling: 높은 품질, 자연스러운 움직임'}
+                    {higgsfieldModel === 'wan-2.6' && '🌊 Wan: 창의적 스타일, 다양한 표현'}
+                    {higgsfieldModel === 'minimax-hailuo' && '🌟 Hailuo: 빠른 속도, 효율적 생성'}
+                  </p>
+                </div>
+              )}
 
               <div className="md:col-span-2 flex gap-6">
                 <label className="flex items-center gap-2 text-gray-400 cursor-pointer">

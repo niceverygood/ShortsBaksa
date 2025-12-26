@@ -21,12 +21,14 @@ const MAX_DURATION_MS = 8000;
 
 type VideoProvider = 'veo' | 'higgsfield';
 type VideoGenerationMode = 'text-to-video-with-audio' | 'video-then-audio';
+type HiggsfieldModel = 'seedance-1.5' | 'kling-2.6' | 'wan-2.6' | 'minimax-hailuo';
 
 export class SceneManager {
   private jobId: string;
   private outputDir: string;
   private videoProvider: VideoProvider;
   private videoGenerationMode: VideoGenerationMode;
+  private higgsfieldModel: HiggsfieldModel;
   private topic: string;
   private category?: string;
   
@@ -36,15 +38,19 @@ export class SceneManager {
     category?: string;
     videoProvider?: VideoProvider;
     videoGenerationMode?: VideoGenerationMode;
+    higgsfieldModel?: string;
   }) {
     this.jobId = options.jobId;
     this.topic = options.topic;
     this.category = options.category;
     this.videoProvider = options.videoProvider || 'veo';
+    this.higgsfieldModel = (options.higgsfieldModel as HiggsfieldModel) || 'seedance-1.5';
     // Veo는 text-to-video-with-audio, 나머지는 video-then-audio
     this.videoGenerationMode = options.videoGenerationMode || 
       (this.videoProvider === 'veo' ? 'text-to-video-with-audio' : 'video-then-audio');
     this.outputDir = path.join(process.cwd(), 'public', 'videos', 'jobs', options.jobId);
+    
+    console.log(`[SceneManager] 초기화: provider=${this.videoProvider}, model=${this.higgsfieldModel}`);
   }
 
   /**
@@ -160,11 +166,11 @@ export class SceneManager {
           // Higgsfield: Video-then-Audio
           // 영상만 생성, 음성은 별도 합성 필요
           // ========================================
-          console.log(`  [${scene.id}] Higgsfield (video-then-audio): ${targetDurationSec}초`);
+          console.log(`  [${scene.id}] Higgsfield (${this.higgsfieldModel}) - video-then-audio: ${targetDurationSec}초`);
           
           const result = await requestHiggsfieldVideo({
             prompt: scene.prompt,
-            model: 'seedance-1.5',
+            model: this.higgsfieldModel,
             duration: targetDurationSec,
             aspectRatio: '9:16',
           });
@@ -332,6 +338,7 @@ export function createSceneManager(options: {
   category?: string;
   videoProvider?: VideoProvider;
   videoGenerationMode?: VideoGenerationMode;
+  higgsfieldModel?: string;
 }): SceneManager {
   return new SceneManager(options);
 }

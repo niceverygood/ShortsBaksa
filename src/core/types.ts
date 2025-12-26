@@ -91,6 +91,15 @@ export interface TimelineOptions {
   videoAI: 'veo' | 'higgsfield';
   
   /**
+   * Higgsfield 플랫폼에서 사용할 AI 모델
+   * - 'seedance-1.5': ByteDance Seedance 1.5 Pro
+   * - 'kling-2.6': Kuaishou Kling 2.6
+   * - 'wan-2.6': Alibaba Wan 2.6
+   * - 'minimax-hailuo': MiniMax Hailuo
+   */
+  higgsfieldModel?: 'seedance-1.5' | 'kling-2.6' | 'wan-2.6' | 'minimax-hailuo';
+  
+  /**
    * 영상 생성 모드:
    * - 'text-to-video-with-audio': Veo 3 전용 - 텍스트로 영상+음성 동시 생성 (TTS 별도 불필요)
    * - 'video-then-audio': Higgsfield 등 - 영상 생성 후 음성 합성 (TTS 필요)
